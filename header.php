@@ -6,8 +6,18 @@
     <?php wp_head(); ?>
   </head>
   <body <?php body_class(); ?>>
-    <div class="bg-gray-300">
-      <div class="max-w-4xl mx-auto mb-5 px-4">
-        <h1 class="text-3xl py-10"><a href="<?php echo get_home_url(); ?>" class="hover:text-blue-500">Welcome To Our Header!</a></h1>
-      </div>
+    <?php wp_body_open(); ?>
+
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:rounded-full focus:bg-chocolate focus:px-5 focus:py-3 focus:text-sm focus:font-bold focus:text-cream">Skip to content</a>
+
+    <!-- Topbar React mount point: contacto + redes (no es sticky; el navbar sí) -->
+    <div id="render-topbar-here">
+      <?php get_template_part('template-parts/topbar-fallback'); ?>
     </div>
+
+    <!-- Navbar React mount point (el contenido interno es el fallback sin JS / para buscadores) -->
+    <div id="render-navbar-here" class="bn-sticky sticky top-0 z-50">
+      <?php get_template_part('template-parts/navbar-fallback'); ?>
+    </div>
+
+    <main id="main-content">

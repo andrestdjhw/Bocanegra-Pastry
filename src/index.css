@@ -1,2 +1,606 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
+
+/*
+ * Tipografías oficiales de marca (OFL), autoalojadas desde assets/fonts (subconjunto latino, WOFF2).
+ * Fuentes originales en /fonts. Big Shoulders: 60pt para títulos grandes, 24pt para títulos chicos.
+ */
+@font-face {
+  font-family: "Big Shoulders 60";
+  src: url("../assets/fonts/big-shoulders-60-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Big Shoulders 60";
+  src: url("../assets/fonts/big-shoulders-60-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Big Shoulders 60";
+  src: url("../assets/fonts/big-shoulders-60-800.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Big Shoulders 24";
+  src: url("../assets/fonts/big-shoulders-24-500.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Big Shoulders 24";
+  src: url("../assets/fonts/big-shoulders-24-600.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Big Shoulders 24";
+  src: url("../assets/fonts/big-shoulders-24-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../assets/fonts/lato-400.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../assets/fonts/lato-400-italic.woff2") format("woff2");
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Lato";
+  src: url("../assets/fonts/lato-700.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * Paleta de la marca final (lockups oficiales + piezas de look & feel):
+ * café Bocanegra #472D20, blanco hueso #F0EFEE, caramelo #926F59 y amarillo mantequilla #FFEDB5.
+ * "gold" conserva el nombre por compatibilidad pero ahora es el caramelo de la marca;
+ * gold-700 y cocoa son tonos para texto con contraste AA sobre fondos claros.
+ */
+@theme {
+  --color-espresso: #472d20;
+  --color-chocolate: #472d20;
+  --color-chocolate-900: #342117;
+  --color-cocoa: #6a5144;
+  --color-gold: #926f59;
+  --color-gold-700: #7a5a46;
+  --color-gold-800: #634738;
+  --color-butter: #ffedb5;
+  --color-butter-200: #fff6d9;
+  --color-cream: #f5f0e8;
+  --color-cream-200: #ece3d5;
+  --color-cream-300: #dccbb3;
+
+  --font-display: "Big Shoulders 24", "Arial Narrow", sans-serif;
+  --font-display-lg: "Big Shoulders 60", "Big Shoulders 24", "Arial Narrow", sans-serif;
+  --font-sans: "Lato", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    html {
+      scroll-behavior: smooth;
+    }
+  }
+
+  body {
+    @apply bg-cream font-sans text-chocolate antialiased;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-gold-700);
+    outline-offset: 3px;
+  }
+
+  .bg-espresso :focus-visible {
+    outline-color: var(--color-butter);
+  }
+
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+
+  summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@layer components {
+  .bn-container {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-10;
+  }
+
+  .bn-section {
+    @apply py-20 md:py-28;
+  }
+
+  /* Padding para la columna de texto en módulos split a sangre completa. */
+  .bn-split-copy {
+    @apply flex flex-col justify-center px-4 py-14 sm:px-10 md:py-20 lg:px-16 xl:px-20;
+  }
+
+  .bn-wordmark {
+    @apply font-display-lg font-bold uppercase tracking-[0.08em];
+  }
+
+  .bn-eyebrow {
+    @apply flex items-center gap-3 font-sans text-[0.7rem] font-bold uppercase tracking-[0.26em] text-gold-700;
+  }
+
+  .bn-eyebrow-light {
+    @apply text-butter;
+  }
+
+  /* Títulos en mayúsculas condensadas, como en el toldo, la tarjeta y el letrero de la marca. */
+  .bn-h1 {
+    @apply font-display-lg text-6xl font-bold uppercase leading-[0.9] tracking-[0.01em] text-balance sm:text-7xl lg:text-[6.25rem];
+  }
+
+  .bn-h2 {
+    @apply font-display-lg text-5xl font-bold uppercase leading-[0.92] tracking-[0.01em] text-balance sm:text-6xl lg:text-[4.25rem];
+  }
+
+  .bn-lead {
+    @apply text-lg leading-relaxed text-cocoa md:text-xl;
+  }
+
+  .bn-body {
+    @apply text-base leading-relaxed text-cocoa md:text-lg;
+  }
+
+  .bn-btn {
+    @apply inline-flex min-h-12 items-center justify-center gap-3 px-6 py-3 text-center text-xs font-bold uppercase tracking-[0.18em] transition-colors duration-200;
+  }
+
+  .bn-btn-primary {
+    @apply bg-chocolate text-cream hover:bg-gold-700;
+  }
+
+  /* En secciones café el botón principal pasa a amarillo mantequilla con texto café. */
+  .bg-espresso .bn-btn-primary {
+    @apply bg-butter text-chocolate hover:bg-butter-200;
+  }
+
+  .bn-btn-outline {
+    @apply border border-chocolate text-chocolate hover:bg-chocolate hover:text-cream;
+  }
+
+  .bn-btn-light {
+    @apply bg-cream text-chocolate hover:bg-white;
+  }
+
+  .bn-link {
+    @apply inline-flex items-center gap-2 text-sm underline decoration-1 underline-offset-[6px] transition-colors hover:decoration-gold;
+  }
+
+  .bn-photo {
+    @apply relative overflow-hidden bg-cream-200;
+  }
+
+  /* Bloque decorativo mientras llegan las fotos reales (no usar stock). */
+  .bn-photo-placeholder {
+    background:
+      radial-gradient(circle at 30% 25%, rgb(255 255 255 / 0.55), transparent 55%),
+      linear-gradient(140deg, var(--color-cream-200) 0%, var(--color-cream-300) 55%, #d5bb92 100%);
+  }
+
+  .bn-photo-placeholder::after {
+    content: "B·N";
+    @apply absolute inset-0 grid place-items-center font-display font-medium tracking-[0.3em];
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    color: rgb(74 46 28 / 0.16);
+  }
+
+  .bn-photo-placeholder-dark {
+    background:
+      radial-gradient(circle at 65% 40%, rgb(176 141 87 / 0.28), transparent 60%),
+      linear-gradient(160deg, #3a2618 0%, #2a1b11 60%, #1c120b 100%);
+  }
+
+  .bn-photo-placeholder-dark::after {
+    color: rgb(176 141 87 / 0.25);
+  }
+
+  .bn-input {
+    @apply block w-full rounded-sm border border-chocolate/25 bg-white px-4 py-3 text-base text-chocolate transition placeholder:text-cocoa/60 focus:border-chocolate focus:outline-none focus:ring-2 focus:ring-gold/50;
+  }
+
+  .bn-input[aria-invalid="true"] {
+    @apply border-red-700 focus:ring-red-700/30;
+  }
+}
+
+/* Tarjetas con efecto 3D (src/scripts/tilt.js). */
+[data-tilt] {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+[data-tilt-depth] {
+  transition: transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+[data-tilt].is-tilting [data-tilt-depth] {
+  transform: translateZ(36px);
+}
+
+.bn-tilt-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at var(--bn-glare-x, 50%) var(--bn-glare-y, 50%), rgb(255 246 217 / 0.35), transparent 55%);
+  mix-blend-mode: soft-light;
+  transition: opacity 0.3s ease-out;
+}
+
+[data-tilt].is-tilting .bn-tilt-glare {
+  opacity: 1;
+}
+
+/* Íconos de redes del footer: rebote elástico al pasar el mouse o enfocar con teclado. */
+@keyframes bn-bounce {
+  0% { transform: translateY(0) scale(1, 1); }
+  25% { transform: translateY(-10px) scale(0.94, 1.08); }
+  50% { transform: translateY(0) scale(1.1, 0.9); }
+  65% { transform: translateY(-4px) scale(0.98, 1.03); }
+  80% { transform: translateY(0) scale(1.03, 0.97); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .bn-bounce:hover,
+  .bn-bounce:focus-visible {
+    animation: bn-bounce 0.7s cubic-bezier(0.28, 0.84, 0.42, 1);
+    transform-origin: 50% 100%;
+  }
+}
+
+/* Stickers: borde blanco de corte (die-cut) + sombra; se elevan al pasar el mouse. */
+.bn-sticker {
+  filter:
+    drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff)
+    drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+    drop-shadow(0 12px 16px rgb(71 45 32 / 0.22));
+  transition: translate 0.35s cubic-bezier(0.2, 0.7, 0.2, 1), scale 0.35s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.bn-sticker:hover {
+  translate: 0 -6px;
+  scale: 1.06;
+}
+
+/*
+ * Degradados en los cafés oscuros: brillo cálido caramelo arriba a la izquierda,
+ * café de marca al centro y un tono más profundo hacia abajo a la derecha.
+ * Aplica a toda superficie .bg-espresso (secciones, footer, topbar, tarjetas).
+ */
+.bg-espresso {
+  background-image:
+    radial-gradient(ellipse 75% 65% at 10% 0%, rgb(146 111 89 / 0.3), transparent 70%),
+    radial-gradient(ellipse 70% 75% at 100% 100%, rgb(26 15 10 / 0.5), transparent 70%),
+    linear-gradient(160deg, #523526 0%, #472d20 48%, #3a2318 100%);
+}
+
+/*
+ * Hero: el velo café del video empieza en café exacto (#472d20); el degradado se mantiene
+ * en ese tono justo donde se unen para no dejar una línea visible.
+ * Móvil: video arriba, velo hacia abajo → café exacto en el primer 40 %.
+ * Desktop: video a la derecha (desde el 32 %), velo hacia la izquierda → café exacto desde el 32 %.
+ */
+.bg-espresso.bn-hero-gradient {
+  background-image:
+    radial-gradient(ellipse 60% 35% at 10% 75%, rgb(146 111 89 / 0.26), transparent 100%),
+    linear-gradient(180deg, #472d20 0%, #472d20 40%, #3a2318 100%);
+}
+
+@media (min-width: 1024px) {
+  .bg-espresso.bn-hero-gradient {
+    background-image:
+      radial-gradient(ellipse 20% 55% at 10% 40%, rgb(146 111 89 / 0.28), transparent 100%),
+      linear-gradient(90deg, #3a2318 0%, #472d20 32%, #472d20 100%);
+  }
+}
+
+/* Textura sutil de papel kraft en los fondos claros (como las cajas y tarjetas de la marca). */
+body,
+.bg-cream,
+.bg-cream-200,
+.bg-butter {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .28 0 0 0 0 .18 0 0 0 0 .12 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/*
+ * Borde festoneado (como la caja de rebanada): semicírculos del color de la sección anterior
+ * que "cuelgan" sobre la sección. Uso: class="bn-scallop-top [--bn-scallop:var(--color-cream-200)]".
+ */
+.bn-scallop-top {
+  --bn-scallop-size: 14px;
+  position: relative;
+}
+
+.bn-scallop-top::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 20;
+  height: var(--bn-scallop-size);
+  background: radial-gradient(circle at 50% 0, var(--bn-scallop, var(--color-cream)) calc(var(--bn-scallop-size) - 0.5px), transparent var(--bn-scallop-size)) 0 0 / calc(var(--bn-scallop-size) * 2) 100% repeat-x;
+  pointer-events: none;
+}
+
+@media (min-width: 768px) {
+  .bn-scallop-top {
+    --bn-scallop-size: 22px;
+  }
+}
+
+/* Google Maps: tono cálido para integrarlo a la paleta; color real al interactuar. */
+.bn-map {
+  filter: grayscale(0.35) sepia(0.3) saturate(0.9) contrast(0.95);
+  transition: filter 0.4s ease;
+}
+
+.bn-map:hover,
+.bn-map:focus {
+  filter: none;
+}
+
+/* Header sticky debajo de la barra de administración de WordPress. */
+.admin-bar .bn-sticky {
+  top: 32px;
+}
+
+@media (max-width: 782px) {
+  .admin-bar .bn-sticky {
+    top: 46px;
+  }
+}
+
+@media (max-width: 600px) {
+  .admin-bar .bn-sticky {
+    top: 0;
+  }
+}
+
+/* ─── Animaciones ───────────────────────────────────────────────
+ * Todo vive dentro de prefers-reduced-motion: no-preference.
+ * Los estados ocultos dependen de .bn-anim (lo agrega el <head>),
+ * así que sin JS el contenido siempre es visible.
+ */
+@keyframes bn-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes bn-settle {
+  from {
+    transform: scale(1.08);
+  }
+  to {
+    transform: scale(1);
+  }
+}
+
+@keyframes bn-pulse {
+  from {
+    transform: scale(0.6);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+@keyframes bn-menu-item {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  :root {
+    --bn-ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+    interpolate-size: allow-keywords;
+  }
+
+  /* Entrada del hero al cargar (no depende de JS). */
+  .bn-hero-in > * {
+    animation: bn-rise 0.9s var(--bn-ease) both;
+  }
+
+  .bn-hero-in > :nth-child(2) {
+    animation-delay: 0.1s;
+  }
+
+  .bn-hero-in > :nth-child(3) {
+    animation-delay: 0.22s;
+  }
+
+  .bn-hero-in > :nth-child(4) {
+    animation-delay: 0.34s;
+  }
+
+  .bn-hero-media img,
+  .bn-hero-media video,
+  .bn-hero-media.bn-photo-placeholder {
+    animation: bn-settle 2.4s var(--bn-ease) both;
+  }
+
+  /* Revelado al hacer scroll. */
+  .bn-anim [data-reveal],
+  .bn-anim [data-reveal-stagger] > * {
+    opacity: 0;
+    transform: translateY(28px);
+    transition:
+      opacity 0.9s var(--bn-ease),
+      transform 0.9s var(--bn-ease),
+      letter-spacing 1.6s var(--bn-ease);
+  }
+
+  .bn-anim [data-reveal="fade"] {
+    transform: none;
+  }
+
+  .bn-anim [data-reveal="left"] {
+    transform: translateX(-48px);
+  }
+
+  .bn-anim [data-reveal="right"] {
+    transform: translateX(48px);
+  }
+
+  .bn-anim [data-reveal="zoom"] {
+    transform: scale(0.97);
+  }
+
+  .bn-anim [data-reveal].is-visible,
+  .bn-anim [data-reveal-stagger].is-visible > * {
+    opacity: 1;
+    transform: none;
+  }
+
+  .bn-anim [data-reveal-stagger] > :nth-child(2) { transition-delay: 0.1s; }
+  .bn-anim [data-reveal-stagger] > :nth-child(3) { transition-delay: 0.2s; }
+  .bn-anim [data-reveal-stagger] > :nth-child(4) { transition-delay: 0.3s; }
+  .bn-anim [data-reveal-stagger] > :nth-child(5) { transition-delay: 0.4s; }
+  .bn-anim [data-reveal-stagger] > :nth-child(6) { transition-delay: 0.5s; }
+  .bn-anim [data-reveal-stagger] > :nth-child(n + 7) { transition-delay: 0.6s; }
+
+  /* Fotos: el contenido se asienta con un zoom lento al aparecer. */
+  .bn-anim .bn-photo[data-reveal] img,
+  .bn-anim .bn-photo-placeholder[data-reveal]::after {
+    transform: scale(1.1);
+    transition: transform 1.8s var(--bn-ease);
+  }
+
+  .bn-anim .bn-photo[data-reveal].is-visible img,
+  .bn-anim .bn-photo-placeholder[data-reveal].is-visible::after {
+    transform: scale(1);
+  }
+
+  /* Líneas doradas que se trazan. */
+  .bn-anim [data-reveal="line"] {
+    opacity: 1;
+    transform: scaleX(0);
+    transition: transform 1.4s var(--bn-ease) 0.2s;
+  }
+
+  .bn-anim [data-reveal="line"].is-visible {
+    transform: scaleX(1);
+  }
+
+  /* Wordmark gigante: el espaciado se cierra al aparecer. */
+  .bn-anim [data-reveal="spread"] {
+    transform: none;
+    letter-spacing: 0.24em;
+  }
+
+  .bn-anim [data-reveal="spread"].is-visible {
+    letter-spacing: 0.04em;
+  }
+
+  /* Hover: zoom en fotos y flecha que avanza. */
+  .bn-zoom-hover img,
+  .bn-zoom-hover .bn-photo-placeholder::after {
+    transition: transform 1s var(--bn-ease);
+  }
+
+  .bn-zoom-hover:hover img,
+  .bn-zoom-hover:hover .bn-photo-placeholder::after {
+    transform: scale(1.05);
+  }
+
+  .bn-btn svg,
+  .bn-link svg {
+    transition: transform 0.3s var(--bn-ease);
+  }
+
+  .bn-btn:hover svg,
+  .bn-link:hover svg {
+    transform: translateX(4px);
+  }
+
+  /* FAQ: apertura con altura animada (Chrome/Edge) + fade en todos. */
+  details::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.45s var(--bn-ease),
+      content-visibility 0.45s allow-discrete;
+  }
+
+  details[open]::details-content {
+    block-size: auto;
+  }
+
+  details[open] > :not(summary) {
+    animation: bn-rise 0.5s var(--bn-ease) both;
+  }
+
+  /* Menú móvil: los links entran en cascada. */
+  .bn-menu-open li {
+    animation: bn-menu-item 0.4s var(--bn-ease) both;
+  }
+
+  .bn-menu-open li:nth-child(2) { animation-delay: 0.05s; }
+  .bn-menu-open li:nth-child(3) { animation-delay: 0.1s; }
+  .bn-menu-open li:nth-child(4) { animation-delay: 0.15s; }
+
+  /* Check del formulario enviado. */
+  .bn-check {
+    stroke-dasharray: 40;
+    stroke-dashoffset: 40;
+    animation: bn-draw 0.7s var(--bn-ease) 0.25s forwards;
+  }
+}
+
+@keyframes bn-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
