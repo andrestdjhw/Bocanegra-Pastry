@@ -42,7 +42,7 @@ function bn_preload_hero_poster() {
 
   $poster = bn_find_image('home-hero-poster');
   if ($poster) {
-    printf("<link rel=\"preload\" as=\"image\" href=\"%s\" fetchpriority=\"high\">\n", esc_url(get_theme_file_uri(isset($poster['webp']) ? $poster['webp'] : $poster['base'])));
+    printf("<link rel=\"preload\" as=\"image\" href=\"%s\" fetchpriority=\"high\">\n", esc_url(bn_versioned_uri(isset($poster['webp']) ? $poster['webp'] : $poster['base'])));
   }
 }
 

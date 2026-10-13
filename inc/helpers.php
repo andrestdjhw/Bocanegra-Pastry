@@ -150,6 +150,15 @@ function bn_media($slot, $alt, $args = array()) {
 }
 
 /**
+ * URL de un archivo del tema con ?v=fecha de modificación, para que al reemplazar
+ * un archivo con el mismo nombre (ej. el video del hero) los navegadores no usen la versión en caché.
+ */
+function bn_versioned_uri($file) {
+  $path = get_theme_file_path($file);
+  return add_query_arg('v', file_exists($path) ? filemtime($path) : '', get_theme_file_uri($file));
+}
+
+/**
  * Video de fondo (silenciado, en bucle) con poster. Se pausa con prefers-reduced-motion
  * y tiene botón de pausa (src/scripts/videos.js). Sin video, cae a bn_media() con el slot del poster.
  *
@@ -165,11 +174,11 @@ function bn_video($slot, $alt, $args = array()) {
 
   $args   = wp_parse_args($args, array('class' => ''));
   $poster = bn_find_image($slot . '-poster');
-  $poster = $poster ? get_theme_file_uri(isset($poster['webp']) ? $poster['webp'] : $poster['base']) : '';
+  $poster = $poster ? bn_versioned_uri(isset($poster['webp']) ? $poster['webp'] : $poster['base']) : '';
   ?>
   <div class="<?php echo esc_attr(trim('bn-photo ' . $args['class'])); ?>">
     <video class="h-full w-full object-cover" autoplay muted loop playsinline preload="auto" data-bg-video aria-label="<?php echo esc_attr($alt); ?>"<?php echo $poster ? ' poster="' . esc_url($poster) . '"' : ''; ?>>
-      <source src="<?php echo esc_url(get_theme_file_uri($file)); ?>" type="video/mp4">
+      <source src="<?php echo esc_url(bn_versioned_uri($file)); ?>" type="video/mp4">
     </video>
     <button type="button" hidden data-bg-video-toggle aria-label="Pause background video" class="absolute bottom-4 right-4 z-10 grid h-11 w-11 place-items-center rounded-full bg-espresso/60 text-cream backdrop-blur transition hover:bg-espresso/80">
       <svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" class="h-4 w-4" data-icon="pause"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z"/></svg>
