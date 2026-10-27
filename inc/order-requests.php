@@ -6,7 +6,12 @@
  * - Registro interno (CPT privado) con estado New / Confirmed / Completed / Cancelled.
  * - Endpoint REST con validación en servidor (mínimo now + 24 h en America/Los_Angeles).
  * - Antispam: honeypot, tiempo mínimo de llenado y límite por IP.
- * - Notificación al negocio por wp_mail (SMTP) con reintentos; autorespuesta al cliente.
+ * - Notificación al negocio:
+ *   · Con EmailJS (bn_config()['emailjs']): el servidor valida y guarda; el navegador envía por EmailJS
+ *     y luego confirma el resultado con un token de un solo uso. Si EmailJS falla o el navegador nunca
+ *     confirma, WordPress envía el aviso por wp_mail como respaldo.
+ *   · Sin EmailJS: wp_mail (SMTP) con reintentos y autorespuesta al cliente.
+ * - reCAPTCHA v3 verificado en el servidor si BN_RECAPTCHA_SECRET está definido en wp-config.php.
  */
 
 const BN_ORDER_CPT      = 'bn_order_request';
@@ -91,6 +96,56 @@ function bn_register_order_route() {
     'callback'            => 'bn_handle_order_request',
     'permission_callback' => '__return_true',
   ));
+
+  // El navegador informa si EmailJS envió el aviso. Protegido por un token de un solo uso.
+  register_rest_route('bocanegra/v1', '/order-requests/(?P<id>\\d+)/notification', array(
+    'methods'             => WP_REST_Server::CREATABLE,
+    'callback'            => 'bn_handle_order_notification',
+    'permission_callback' => '__return_true',
+  ));
+}
+
+function bn_emailjs_enabled() {
+  $emailjs = bn_config()['emailjs'] ?? array();
+  return !empty($emailjs['service_id']) && !empty($emailjs['template_id']) && !empty($emailjs['public_key']);
+}
+
+/**
+ * Verifica el token de reCAPTCHA v3 con Google. Sin BN_RECAPTCHA_SECRET no hay verificación.
+ * Si Google no responde (error de red) se deja pasar para no perder pedidos reales; queda en el log.
+ */
+function bn_verify_recaptcha($token) {
+  if (!defined('BN_RECAPTCHA_SECRET') || !BN_RECAPTCHA_SECRET) {
+    return true;
+  }
+
+  if (!$token) {
+    return false;
+  }
+
+  $response = wp_remote_post('https://www.google.com/recaptcha/api/siteverify', array(
+    'timeout' => 8,
+    'body'    => array(
+      'secret'   => BN_RECAPTCHA_SECRET,
+      'response' => $token,
+      'remoteip' => $_SERVER['REMOTE_ADDR'] ?? '',
+    ),
+  ));
+
+  if (is_wp_error($response)) {
+    error_log('[Bocanegra] reCAPTCHA verification unavailable: ' . $response->get_error_message());
+    return true;
+  }
+
+  $result = json_decode(wp_remote_retrieve_body($response), true);
+  $score  = (float) ($result['score'] ?? 0);
+  $passed = !empty($result['success']) && ($result['action'] ?? '') === 'order_request' && $score >= 0.5;
+
+  if (!$passed) {
+    error_log('[Bocanegra] reCAPTCHA rejected a request (score ' . $score . ').');
+  }
+
+  return $passed;
 }
 
 add_action('rest_api_init', 'bn_register_order_route');
@@ -122,6 +177,10 @@ function bn_handle_order_request(WP_REST_Request $request) {
     return new WP_Error('bn_invalid', 'Please review the highlighted fields.', array('status' => 422, 'fields' => $errors));
   }
 
+  if (!bn_verify_recaptcha(sanitize_text_field($params['recaptcha_token'] ?? ''))) {
+    return new WP_Error('bn_recaptcha', 'We couldn’t verify your request. Please try again in a moment.', array('status' => 403));
+  }
+
   set_transient($rate_key, $sent + 1, HOUR_IN_SECONDS);
 
   $post_id = wp_insert_post(array(
@@ -141,6 +200,23 @@ function bn_handle_order_request(WP_REST_Request $request) {
   update_post_meta($post_id, '_bn_status', 'new');
   update_post_meta($post_id, '_bn_consent_text', BN_ORDER_CONSENT);
   update_post_meta($post_id, '_bn_consent_at', gmdate('c'));
+  // EmailJS: el navegador envía el aviso y confirma con este token de un solo uso.
+  // Si no confirma en 10 minutos (pestaña cerrada, error de red), WordPress envía el respaldo.
+  if (bn_emailjs_enabled()) {
+    $token = wp_generate_password(32, false);
+    update_post_meta($post_id, '_bn_notify_token', hash('sha256', $token));
+    update_post_meta($post_id, '_bn_mail_status', 'pending');
+    update_post_meta($post_id, '_bn_mail_attempts', 0);
+    wp_schedule_single_event(time() + 10 * MINUTE_IN_SECONDS, 'bn_order_notify_fallback', array($post_id));
+
+    return new WP_REST_Response(array(
+      'ok'     => true,
+      'id'     => $post_id,
+      'token'  => $token,
+      'params' => bn_emailjs_params($post_id),
+    ), 201);
+  }
+
   update_post_meta($post_id, '_bn_mail_attempts', 2);
 
   // La confirmación al cliente solo se muestra si el negocio recibió el correo.
@@ -217,6 +293,120 @@ function bn_validate_order(array $p) {
   return array(
     compact('name', 'email', 'phone', 'date', 'time', 'quantity', 'notes', 'source'),
     $errors,
+  );
+}
+
+/**
+ * El navegador informa el resultado de EmailJS: 'sent' o 'failed'.
+ * Si falló, WordPress intenta el respaldo por wp_mail; la confirmación al cliente
+ * solo se muestra si alguno de los dos envíos funcionó.
+ */
+function bn_handle_order_notification(WP_REST_Request $request) {
+  $post_id = (int) $request['id'];
+  $params  = $request->get_json_params();
+  $token   = is_array($params) ? (string) ($params['token'] ?? '') : '';
+  $stored  = get_post_meta($post_id, '_bn_notify_token', true);
+
+  if (get_post_type($post_id) !== BN_ORDER_CPT || !$stored || !$token || !hash_equals($stored, hash('sha256', $token))) {
+    return new WP_Error('bn_forbidden', 'Invalid request.', array('status' => 403));
+  }
+
+  delete_post_meta($post_id, '_bn_notify_token'); // un solo uso
+  wp_clear_scheduled_hook('bn_order_notify_fallback', array($post_id));
+
+  if (($params['status'] ?? '') === 'sent') {
+    update_post_meta($post_id, '_bn_mail_status', 'sent');
+    update_post_meta($post_id, '_bn_mail_channel', 'EmailJS');
+
+    // La confirmación al cliente (auto-reply) falló en EmailJS: respaldo por wp_mail.
+    if (($params['autoreply'] ?? '') === 'failed') {
+      bn_send_customer_autoreply($post_id);
+    }
+
+    return new WP_REST_Response(array('ok' => true), 200);
+  }
+
+  if (bn_send_fallback_notification($post_id)) {
+    return new WP_REST_Response(array('ok' => true), 200);
+  }
+
+  return new WP_Error('bn_mail_failed', 'Something went wrong while sending your request. Please try again in a few minutes.', array('status' => 503));
+}
+
+/**
+ * Respaldo por wp_mail cuando EmailJS no envió. Si también falla, quedan los reintentos automáticos.
+ */
+function bn_send_fallback_notification($post_id) {
+  if (bn_send_business_notification($post_id) || bn_send_business_notification($post_id)) {
+    update_post_meta($post_id, '_bn_mail_status', 'sent');
+    update_post_meta($post_id, '_bn_mail_channel', 'wp_mail (EmailJS fallback)');
+    bn_send_customer_autoreply($post_id);
+    return true;
+  }
+
+  update_post_meta($post_id, '_bn_mail_status', 'failed');
+  update_post_meta($post_id, '_bn_mail_attempts', 2);
+  wp_schedule_single_event(time() + 5 * MINUTE_IN_SECONDS, 'bn_retry_order_mail', array($post_id));
+  return false;
+}
+
+/**
+ * El navegador nunca confirmó el envío por EmailJS (pestaña cerrada, error de red…).
+ */
+function bn_order_notify_fallback($post_id) {
+  if (get_post_meta($post_id, '_bn_mail_status', true) !== 'pending') {
+    return;
+  }
+
+  delete_post_meta($post_id, '_bn_notify_token');
+  bn_send_fallback_notification($post_id);
+}
+
+add_action('bn_order_notify_fallback', 'bn_order_notify_fallback');
+
+/**
+ * Variables disponibles para la plantilla de EmailJS ({{name}}, {{message}}, etc.).
+ * Incluye alias comunes (from_name, reply_to, message) para plantillas genéricas.
+ */
+function bn_emailjs_params($post_id) {
+  $order     = bn_order_data($post_id);
+  $reference = 'BN-' . str_pad((string) $post_id, 4, '0', STR_PAD_LEFT);
+  $notes     = $order['notes'] ?: '—';
+  $admin_url = admin_url('post.php?post=' . $post_id . '&action=edit');
+
+  $message = implode("\n", array(
+    'Request: ' . $reference,
+    'Name: ' . $order['name'],
+    'Email: ' . $order['email'],
+    'Phone: ' . $order['phone'],
+    'Preferred date & time: ' . $order['when_label'],
+    'Number of cheesecakes: ' . $order['quantity'],
+    'Questions or special requests: ' . $notes,
+    'Submitted from: ' . $order['source'],
+    '',
+    'This request is NOT confirmed until someone from the team contacts the customer.',
+    'Manage it in WordPress: ' . $admin_url,
+  ));
+
+  $submitted = new DateTimeImmutable('@' . get_post_timestamp($post_id));
+  $submitted = $submitted->setTimezone(new DateTimeZone(BN_ORDER_TZ))->format('F j, Y \\a\\t g:i A') . ' (Pacific Time)';
+
+  return array(
+    'request_id'         => $reference,
+    'submitted_at'       => $submitted,
+    'name'               => $order['name'],
+    'email'              => $order['email'],
+    'phone'              => $order['phone'],
+    'preferred_datetime' => $order['when_label'],
+    'quantity'           => (string) $order['quantity'],
+    'notes'              => $notes,
+    'source'             => $order['source'],
+    'admin_url'          => $admin_url,
+    'title'              => 'New cheesecake request ' . $reference,
+    'message'            => $message,
+    'from_name'          => $order['name'],
+    'reply_to'           => $order['email'],
+    'to_name'            => bn_config()['brand'],
   );
 }
 
@@ -463,7 +653,7 @@ function bn_render_order_details($post) {
     'Submitted from'                => esc_html($order['source']),
     'Received'                      => esc_html(get_the_date('F j, Y g:i A', $post)),
     'Contact consent'               => $order['consent_at'] ? esc_html('Yes — ' . BN_ORDER_CONSENT) : 'No',
-    'Notification email'            => $order['mail'] === 'sent' ? 'Sent' : '<span style="color:#b32d2e">Failed — retrying automatically</span>',
+    'Notification email'            => bn_mail_status_label($post->ID),
   );
 
   echo '<table class="widefat striped"><tbody>';
@@ -471,6 +661,19 @@ function bn_render_order_details($post) {
     printf('<tr><th style="width:220px">%s</th><td>%s</td></tr>', esc_html($label), $value);
   }
   echo '</tbody></table>';
+}
+
+function bn_mail_status_label($post_id) {
+  $status  = get_post_meta($post_id, '_bn_mail_status', true);
+  $channel = get_post_meta($post_id, '_bn_mail_channel', true);
+
+  if ($status === 'sent') {
+    return esc_html('Sent' . ($channel ? ' via ' . $channel : ''));
+  }
+  if ($status === 'pending') {
+    return 'Pending — sending via EmailJS (WordPress will send a backup if it is not confirmed)';
+  }
+  return '<span style="color:#b32d2e">Failed — retrying automatically</span>';
 }
 
 function bn_render_order_status($post) {

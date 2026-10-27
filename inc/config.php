@@ -26,7 +26,23 @@ function bn_config() {
     'email'         => '',
 
     // Destino de notificaciones de pedidos. Vacío = email del administrador de WordPress.
+    // (Con EmailJS activo, el destinatario se define en la plantilla de EmailJS; este correo
+    // se usa solo para el respaldo por wp_mail).
     'notify_email' => '',
+
+    // EmailJS: envía la notificación del pedido desde el navegador. Estas claves son públicas por diseño.
+    // Vaciar 'service_id' desactiva EmailJS y el sitio vuelve a enviar todo por wp_mail/SMTP.
+    'emailjs' => array(
+      'service_id'           => 'service_6ira9cq',
+      'template_id'          => 'template_oclkset', // aviso al negocio
+      'autoreply_template_id' => 'template_hp303rl', // confirmación al cliente ('' = sin auto-reply por EmailJS)
+      'public_key'           => '73VP7PM69Atf30gyQ',
+    ),
+
+    // Google reCAPTCHA v3 (clave de sitio, pública). La verifica WordPress, no EmailJS
+    // (EmailJS solo admite reCAPTCHA v2). La clave SECRETA va en wp-config.php:
+    // define('BN_RECAPTCHA_SECRET', '...'); — sin ella, el formulario funciona sin verificación de reCAPTCHA.
+    'recaptcha_site_key' => '6LcR3QMuAAAAAFKC-EQAYn2a76jPIf0gaKVuqRSw',
 
     // Redes sociales: pegar la URL verificada cuando exista la cuenta.
     // Sin URL, el ícono se muestra sin enlace (no se publican links rotos ni se agrega al schema).

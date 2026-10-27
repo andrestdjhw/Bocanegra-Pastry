@@ -106,9 +106,17 @@ function bn_script_data() {
       'slice'     => bn_brand_url('rebanada-lisa-light'),
     ),
     'privacyUrl' => get_privacy_policy_url(),
+    'termsUrl'   => bn_terms_url(),
     'form'       => array(
-      'endpoint'    => rest_url('bocanegra/v1/order-requests'),
-      'maxQuantity' => BN_ORDER_MAX_QTY,
+      'endpoint'         => rest_url('bocanegra/v1/order-requests'),
+      'maxQuantity'      => BN_ORDER_MAX_QTY,
+      'recaptchaSiteKey' => $config['recaptcha_site_key'],
+      'emailjs'          => bn_emailjs_enabled() ? array(
+        'serviceId'  => $config['emailjs']['service_id'],
+        'templateId' => $config['emailjs']['template_id'],
+        'autoReplyTemplateId' => $config['emailjs']['autoreply_template_id'] ?? '',
+        'publicKey'  => $config['emailjs']['public_key'],
+      ) : null,
     ),
   );
 }

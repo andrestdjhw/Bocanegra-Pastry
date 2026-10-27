@@ -15,6 +15,9 @@ $config = bn_config();
       <?php if (get_privacy_policy_url()) : ?>
         <li><a href="<?php echo esc_url(get_privacy_policy_url()); ?>">Privacy Policy</a></li>
       <?php endif; ?>
+      <?php if (bn_terms_url()) : ?>
+        <li><a href="<?php echo esc_url(bn_terms_url()); ?>">Terms &amp; Conditions</a></li>
+      <?php endif; ?>
     </ul>
   </div>
 </footer>

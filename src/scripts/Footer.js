@@ -53,6 +53,28 @@ function Footer({ data }) {
               </li>
             ))}
           </ul>
+
+          {(data.privacyUrl || data.termsUrl) && (
+            <>
+              <h2 className="mt-10 text-xs font-bold uppercase tracking-[0.22em] text-butter">Legal</h2>
+              <ul className="mt-5 space-y-3">
+                {data.privacyUrl && (
+                  <li>
+                    <a href={data.privacyUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
+                      Privacy Policy
+                    </a>
+                  </li>
+                )}
+                {data.termsUrl && (
+                  <li>
+                    <a href={data.termsUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
+                      Terms &amp; Conditions
+                    </a>
+                  </li>
+                )}
+              </ul>
+            </>
+          )}
         </nav>
 
         <div>
@@ -94,11 +116,17 @@ function Footer({ data }) {
           <p>
             © {year} {data.brand}. All rights reserved.
           </p>
-          {data.privacyUrl && (
-            <a href={data.privacyUrl} className="hover:text-cream hover:underline hover:underline-offset-4">
-              Privacy Policy
+          <p>
+            Site by{" "}
+            <a
+              href="https://828marketingsolutions.com"
+              target="_blank"
+              rel="noopener"
+              className="text-cream/85 underline-offset-4 transition hover:text-butter hover:underline"
+            >
+              828 Marketing Solutions
             </a>
-          )}
+          </p>
         </div>
       </div>
     </footer>

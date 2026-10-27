@@ -1,12 +1,45 @@
 import React, { useEffect, useRef, useState } from "react"
+import emailjs from "@emailjs/browser"
 import { earliestSlot, formatSlot, isAtLeast24hAhead, latestDate } from "./pacificTime"
 import { track } from "./analytics"
+import { getRecaptchaToken, loadRecaptcha } from "./recaptcha"
 
 /**
  * Formulario de solicitud de pedido (no es una compra).
  * variant "home": formulario corto al final de Home.
  * variant "page": formulario principal en /request-an-order/.
+ *
+ * Envío:
+ * 1. WordPress valida (incluida la regla de 24 h), verifica reCAPTCHA v3 y guarda la solicitud.
+ * 2. Si EmailJS está configurado, el navegador envía el aviso al negocio con EmailJS.
+ * 3. El navegador informa el resultado a WordPress; si EmailJS falló, WordPress envía el respaldo.
+ * La confirmación solo se muestra cuando el aviso salió por alguno de los dos caminos.
  */
+
+const GENERIC_ERROR = "Something went wrong while sending your request. Please try again in a few minutes."
+
+async function postJSON(url, payload) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+  const body = await res.json().catch(() => ({}))
+  return { ok: res.ok, body }
+}
+
+// Envía una plantilla por EmailJS. Devuelve true/false; nunca lanza.
+// Cada plantilla usa su propio límite (un envío cada 10 s por navegador) para que el aviso
+// al negocio y la confirmación al cliente no se bloqueen entre sí.
+async function sendWithEmailJS(config, templateId, params) {
+  try {
+    await emailjs.send(config.serviceId, templateId, params, {
+      publicKey: config.publicKey,
+      blockHeadless: true, // bloquea navegadores automatizados
+      limitRate: { id: `bn-${templateId}`, throttle: 10000 },
+    })
+    return true
+  } catch (error) {
+    console.error("[Bocanegra] EmailJS:", templateId, error?.status, error?.text || error)
+    return false
+  }
+}
 const COPY = {
   home: {
     button: "Send Request",
@@ -74,7 +107,7 @@ function Field({ id, label, required, error, hint, children }) {
 
 function ContactForm({ data, variant = "page" }) {
   const copy = COPY[variant] || COPY.page
-  const { endpoint, maxQuantity } = data.form
+  const { endpoint, maxQuantity, recaptchaSiteKey, emailjs: emailjsConfig } = data.form
   const uid = `bn-${variant}`
 
   const [values, setValues] = useState(EMPTY)
@@ -110,6 +143,7 @@ function ContactForm({ data, variant = "page" }) {
     if (started.current) return
     started.current = true
     track("form_start", { form_variant: variant })
+    loadRecaptcha(recaptchaSiteKey) // precarga mientras la persona llena el formulario
   }
 
   const focusFirstError = fieldErrors => {
@@ -130,33 +164,51 @@ function ContactForm({ data, variant = "page" }) {
 
     setStatus("submitting")
 
-    try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...values,
-          name: values.name.trim(),
-          email: values.email.trim(),
-          quantity: Number(values.quantity),
-          source: variant,
-          elapsed_ms: Date.now() - startedAt.current,
-        }),
-      })
-      const body = await res.json().catch(() => ({}))
+    const succeed = () => {
+      setStatus("success")
+      track("form_submit_success", { form_variant: variant, quantity: Number(values.quantity) })
+    }
 
-      if (res.ok) {
-        setStatus("success")
-        track("form_submit_success", { form_variant: variant, quantity: Number(values.quantity) })
+    try {
+      // 1. WordPress valida, verifica reCAPTCHA y guarda la solicitud.
+      const saved = await postJSON(endpoint, {
+        ...values,
+        name: values.name.trim(),
+        email: values.email.trim(),
+        quantity: Number(values.quantity),
+        source: variant,
+        elapsed_ms: Date.now() - startedAt.current,
+        recaptcha_token: await getRecaptchaToken(recaptchaSiteKey),
+      })
+
+      if (!saved.ok) {
+        const remoteErrors = saved.body?.data?.fields
+        if (remoteErrors) {
+          setErrors(remoteErrors)
+          focusFirstError(remoteErrors)
+        }
+        setServerError(saved.body?.message || GENERIC_ERROR)
+        setStatus("idle")
         return
       }
 
-      const remoteErrors = body?.data?.fields
-      if (remoteErrors) {
-        setErrors(remoteErrors)
-        focusFirstError(remoteErrors)
+      // Sin EmailJS (o respuesta del honeypot): WordPress ya envió el aviso.
+      const { id, token, params } = saved.body
+      if (!emailjsConfig || !id || !token) return succeed()
+
+      // 2. Aviso al negocio por EmailJS y, si salió, confirmación al cliente (auto-reply).
+      const sent = await sendWithEmailJS(emailjsConfig, emailjsConfig.templateId, params)
+      let autoreply = "skipped"
+      if (sent && emailjsConfig.autoReplyTemplateId) {
+        autoreply = (await sendWithEmailJS(emailjsConfig, emailjsConfig.autoReplyTemplateId, params)) ? "sent" : "failed"
       }
-      setServerError(body?.message || "Something went wrong while sending your request. Please try again in a few minutes.")
+
+      // 3. Informa el resultado. Si el aviso falló, WordPress envía el respaldo (aviso + confirmación);
+      //    si solo falló la confirmación al cliente, WordPress la reenvía por wp_mail.
+      const confirmed = await postJSON(`${endpoint}/${id}/notification`, { token, status: sent ? "sent" : "failed", autoreply }).catch(() => ({ ok: false }))
+
+      if (sent || confirmed.ok) return succeed()
+      setServerError(confirmed.body?.message || GENERIC_ERROR)
     } catch {
       setServerError("We couldn’t reach our server. Please check your connection and try again.")
     }
@@ -292,6 +344,39 @@ function ContactForm({ data, variant = "page" }) {
         </button>
         <p className="text-xs leading-relaxed text-cocoa sm:max-w-56 sm:text-right">Submitting this form does not confirm your order.</p>
       </div>
+
+      {(data.privacyUrl || data.termsUrl) && (
+        <p className="mt-6 text-xs leading-relaxed text-cocoa">
+          Your request is delivered to our team by email through EmailJS
+          {recaptchaSiteKey ? " and protected from spam by Google reCAPTCHA" : ""}. Learn how we handle your information in our{" "}
+          {data.privacyUrl && (
+            <a href={data.privacyUrl} className="underline underline-offset-2">
+              Privacy Policy
+            </a>
+          )}
+          {data.privacyUrl && data.termsUrl && " and "}
+          {data.termsUrl && (
+            <a href={data.termsUrl} className="underline underline-offset-2">
+              Terms and Conditions
+            </a>
+          )}
+          .
+        </p>
+      )}
+
+      {recaptchaSiteKey && (
+        <p className="mt-3 text-[0.7rem] leading-relaxed text-cocoa/80">
+          This site is protected by reCAPTCHA and the Google{" "}
+          <a href="https://policies.google.com/privacy" target="_blank" rel="noopener" className="underline underline-offset-2">
+            Privacy Policy
+          </a>{" "}
+          and{" "}
+          <a href="https://policies.google.com/terms" target="_blank" rel="noopener" className="underline underline-offset-2">
+            Terms of Service
+          </a>{" "}
+          apply.
+        </p>
+      )}
     </form>
   )
 }

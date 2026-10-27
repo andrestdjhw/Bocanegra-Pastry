@@ -1,0 +1,69 @@
+<!--
+  EmailJS — Auto-Reply de template_oclkset (confirmación de recibido para el cliente).
+  Pegar en EmailJS → Email Templates → template_oclkset → pestaña "Auto-Reply" → Content.
+  Copy basado en el brief: la solicitud NO confirma el pedido.
+-->
+<div style="margin:0; padding:0; background-color:#f5f0e8;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f5f0e8;">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="max-width:600px; background-color:#ffffff; border:1px solid #e3d8c7;">
+
+          <!-- Encabezado -->
+          <tr>
+            <td align="center" style="background-color:#472d20; padding:28px;">
+              <div style="font-family:'Arial Narrow', Arial, Helvetica, sans-serif; font-size:26px; font-weight:bold; letter-spacing:3px; color:#f0efee; text-transform:uppercase;">Bocanegra</div>
+              <div style="font-family:Arial, Helvetica, sans-serif; font-size:10px; letter-spacing:4px; color:#ffedb5; text-transform:uppercase; margin-top:4px;">Pastry Boutique</div>
+            </td>
+          </tr>
+
+          <!-- Mensaje -->
+          <tr>
+            <td style="padding:32px 28px 8px; font-family:Arial, Helvetica, sans-serif; color:#472d20;">
+              <h1 style="font-family:'Arial Narrow', Arial, Helvetica, sans-serif; font-size:28px; line-height:1.1; margin:0; text-transform:uppercase;">Thank you, {{name}}!</h1>
+              <p style="font-size:15px; line-height:1.6; color:#6a5144; margin:16px 0 0;">We’ve received your cheesecake request. We’ll contact you to confirm availability and next steps.</p>
+            </td>
+          </tr>
+
+          <!-- Aviso: no está confirmado -->
+          <tr>
+            <td style="padding:16px 28px 4px;">
+              <div style="background-color:#fff6d9; border-left:4px solid #926f59; padding:12px 14px; font-family:Arial, Helvetica, sans-serif; font-size:14px; line-height:1.5; color:#472d20;">
+                <strong>Your order is not yet confirmed.</strong> It will be scheduled only after our team contacts you.
+              </div>
+            </td>
+          </tr>
+
+          <!-- Resumen -->
+          <tr>
+            <td style="padding:20px 28px 4px;">
+              <div style="font-family:Arial, Helvetica, sans-serif; font-size:11px; font-weight:bold; letter-spacing:2px; color:#7a5a46; text-transform:uppercase; margin-bottom:6px;">Your request · {{request_id}}</div>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial, Helvetica, sans-serif; font-size:14px; color:#472d20;">
+                <tr>
+                  <td style="padding:10px 0; border-bottom:1px solid #eee3d3; width:45%; color:#7a5a46; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Preferred date &amp; time</td>
+                  <td style="padding:10px 0; border-bottom:1px solid #eee3d3; font-weight:bold;">{{preferred_datetime}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; border-bottom:1px solid #eee3d3; color:#7a5a46; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Number of cheesecakes</td>
+                  <td style="padding:10px 0; border-bottom:1px solid #eee3d3; font-weight:bold;">{{quantity}}</td>
+                </tr>
+                <tr>
+                  <td style="padding:10px 0; vertical-align:top; color:#7a5a46; font-size:12px; text-transform:uppercase; letter-spacing:1px;">Your note</td>
+                  <td style="padding:10px 0; white-space:pre-line; line-height:1.5;">{{notes}}</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Cierre -->
+          <tr>
+            <td align="center" style="padding:28px 28px 32px;">
+              <div style="font-family:'Arial Narrow', Arial, Helvetica, sans-serif; font-size:18px; font-weight:bold; letter-spacing:2px; color:#472d20; text-transform:uppercase;">Every Slice Tells a Story.</div>
+              <p style="font-family:Arial, Helvetica, sans-serif; font-size:12px; line-height:1.5; color:#9a8577; margin:8px 0 0;">Bocanegra Pastry Boutique · Orange County, California</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</div>

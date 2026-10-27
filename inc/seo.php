@@ -20,7 +20,12 @@ function bn_document_title($title) {
   }
 
   $meta = bn_seo_meta();
-  return $meta ? $meta['title'] : $title;
+  if ($meta) {
+    return $meta['title'];
+  }
+
+  // Páginas secundarias (Privacy Policy, Terms…): "Título | Bocanegra Pastry Boutique".
+  return is_singular() ? get_the_title() . ' | ' . bn_config()['brand'] : $title;
 }
 
 add_filter('pre_get_document_title', 'bn_document_title');
