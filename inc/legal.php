@@ -8,7 +8,7 @@
  * IMPORTANTE: borrador para revisión legal antes del lanzamiento.
  *
  * Shortcodes para datos que aún no están confirmados (se actualizan solos desde bn_config()):
- * [bn_contact], [bn_analytics_notice].
+ * [bn_contact], [bn_analytics_notice]. [bn_cookie_settings] abre el panel de cookies.
  */
 
 const BN_LEGAL_UPDATED = 'October 27, 2026';
@@ -46,6 +46,32 @@ function bn_analytics_notice_shortcode() {
 }
 
 add_shortcode('bn_analytics_notice', 'bn_analytics_notice_shortcode');
+
+/**
+ * Botón que abre el panel "Cookie Settings" (src/scripts/CookieConsent.js).
+ */
+function bn_cookie_settings_shortcode() {
+  return '<button type="button" data-bn-cookie-settings class="bn-btn bn-btn-outline not-prose">Cookie Settings</button>';
+}
+
+add_shortcode('bn_cookie_settings', 'bn_cookie_settings_shortcode');
+
+/**
+ * Sección de cookies para la Privacy Policy (versión 2 de las páginas legales).
+ */
+function bn_privacy_cookies_section() {
+  return <<<HTML
+<h2>Cookies and similar technologies</h2>
+<p>When you first visit our website, we ask which optional cookies and similar technologies we may use. We remember your choice for up to 180 days in a first-party cookie called <code>bn_consent</code>.</p>
+<ul>
+<li><strong>Essential (always on).</strong> These keep the website and request form working and secure: Google reCAPTCHA spam protection (loaded only when you start filling out the request form), the EmailJS limit that prevents repeated submissions (stored in your browser’s local storage), and the cookie that remembers your choices.</li>
+<li><strong>Maps &amp; embedded content (optional).</strong> The Google Map of our service area loads only if you allow it, either in Cookie Settings or by selecting “Show Map.” Google may then set cookies and collect information such as your IP address.</li>
+<li><strong>Analytics (optional).</strong> If we use analytics tools, they load only if you allow them. If your browser sends a Global Privacy Control signal, we treat it as a request to keep analytics off.</li>
+</ul>
+<p>You can change or withdraw your choices at any time using the “Cookie Settings” link at the bottom of every page, or here:</p>
+<p>[bn_cookie_settings]</p>
+HTML;
+}
 
 function bn_privacy_policy_content() {
   $brand = esc_html(bn_config()['brand']);
@@ -229,3 +255,30 @@ function bn_ensure_legal_pages() {
 }
 
 add_action('init', 'bn_ensure_legal_pages', 21);
+
+/**
+ * Versión 2: agrega la sección de cookies a la Privacy Policy existente sin sobrescribir
+ * ediciones del cliente. Se inserta antes de "Changes to this policy" (o al final) y solo si falta.
+ */
+function bn_update_legal_pages_v2() {
+  if (get_option('bn_legal_pages_version') !== '1') {
+    return;
+  }
+
+  $privacy_id = (int) get_option('wp_page_for_privacy_policy');
+  $privacy    = $privacy_id ? get_post($privacy_id) : null;
+
+  if ($privacy && strpos($privacy->post_content, 'Cookies and similar technologies') === false) {
+    $content = $privacy->post_content;
+    $section = bn_privacy_cookies_section() . "\n\n";
+    $anchor  = '<h2>Changes to this policy</h2>';
+    $content = strpos($content, $anchor) !== false ? str_replace($anchor, $section . $anchor, $content) : $content . "\n\n" . $section;
+    $content = str_replace('Last updated: ' . BN_LEGAL_UPDATED, 'Last updated: November 12, 2026', $content);
+
+    wp_update_post(array('ID' => $privacy->ID, 'post_content' => $content));
+  }
+
+  update_option('bn_legal_pages_version', '2');
+}
+
+add_action('init', 'bn_update_legal_pages_v2', 22);

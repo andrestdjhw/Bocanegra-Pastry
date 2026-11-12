@@ -104,6 +104,10 @@ function bn_script_data() {
     'brandAssets' => array(
       'watermark' => bn_brand_url('isologo-cream'),
       'slice'     => bn_brand_url('rebanada-lisa-light'),
+      'isotipo'   => bn_brand_url('isotipo-chocolate'),
+    ),
+    'consent'    => array(
+      'gtmId' => $config['gtm_id'],
     ),
     'privacyUrl' => get_privacy_policy_url(),
     'termsUrl'   => bn_terms_url(),
@@ -168,25 +172,6 @@ function bn_animation_flag() {
 add_action('wp_head', 'bn_animation_flag', 0);
 
 /**
- * GTM: solo se carga cuando hay un contenedor configurado.
+ * GTM ya no se imprime en el HTML: src/scripts/consent.js lo carga solo si el visitante
+ * acepta la categoría Analytics en el aviso de cookies (bn_config()['gtm_id']).
  */
-function bn_gtm_head() {
-  $id = bn_config()['gtm_id'];
-  if (!$id) {
-    return;
-  }
-  ?>
-  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','<?php echo esc_js($id); ?>');</script>
-  <?php
-}
-
-add_action('wp_head', 'bn_gtm_head', 1);
-
-function bn_gtm_body() {
-  $id = bn_config()['gtm_id'];
-  if ($id) {
-    printf('<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=%s" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>', esc_attr($id));
-  }
-}
-
-add_action('wp_body_open', 'bn_gtm_body');

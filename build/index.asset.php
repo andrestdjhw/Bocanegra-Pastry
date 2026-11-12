@@ -4,5 +4,5 @@
 		'react-dom',
 		'react-jsx-runtime'
 	),
-	'version' => '6da70d3502af225552f4'
+	'version' => 'aaa29ab3d5df1fdc55be'
 );

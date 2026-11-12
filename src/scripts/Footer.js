@@ -54,27 +54,28 @@ function Footer({ data }) {
             ))}
           </ul>
 
-          {(data.privacyUrl || data.termsUrl) && (
-            <>
-              <h2 className="mt-10 text-xs font-bold uppercase tracking-[0.22em] text-butter">Legal</h2>
-              <ul className="mt-5 space-y-3">
-                {data.privacyUrl && (
-                  <li>
-                    <a href={data.privacyUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
-                      Privacy Policy
-                    </a>
-                  </li>
-                )}
-                {data.termsUrl && (
-                  <li>
-                    <a href={data.termsUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
-                      Terms &amp; Conditions
-                    </a>
-                  </li>
-                )}
-              </ul>
-            </>
-          )}
+          <h2 className="mt-10 text-xs font-bold uppercase tracking-[0.22em] text-butter">Legal</h2>
+          <ul className="mt-5 space-y-3">
+            {data.privacyUrl && (
+              <li>
+                <a href={data.privacyUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
+                  Privacy Policy
+                </a>
+              </li>
+            )}
+            {data.termsUrl && (
+              <li>
+                <a href={data.termsUrl} className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
+                  Terms &amp; Conditions
+                </a>
+              </li>
+            )}
+            <li>
+              <button type="button" data-bn-cookie-settings className="text-cream/85 transition hover:text-cream hover:underline hover:underline-offset-4">
+                Cookie Settings
+              </button>
+            </li>
+          </ul>
         </nav>
 
         <div>

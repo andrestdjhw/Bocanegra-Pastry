@@ -4,15 +4,18 @@ import Topbar from "./scripts/Topbar"
 import Navbar from "./scripts/Navbar"
 import Footer from "./scripts/Footer"
 import ContactForm from "./scripts/ContactForm"
+import CookieConsent from "./scripts/CookieConsent"
 import { initAnalytics } from "./scripts/analytics"
 import { initMobileRequestBand } from "./scripts/mobileRequestBand"
 import { initAnimations } from "./scripts/animations"
 import { initVideos } from "./scripts/videos"
 import { initTilt } from "./scripts/tilt"
+import { initConsentGates } from "./scripts/consent"
 
 const data = window.bocanegraData
 
 if (data) {
+  initConsentGates(data) // bloquea Google Maps / GTM hasta que haya consentimiento
   initAnalytics(data)
 
   if (document.querySelector("#render-topbar-here")) {
@@ -35,6 +38,11 @@ if (data) {
     const formRoot = ReactDOM.createRoot(el)
     formRoot.render(<ContactForm data={data} variant={el.dataset.variant} />)
   })
+
+  if (document.querySelector("#render-cookie-consent-here")) {
+    const consentRoot = ReactDOM.createRoot(document.querySelector("#render-cookie-consent-here"))
+    consentRoot.render(<CookieConsent data={data} />)
+  }
 
   initMobileRequestBand()
   initAnimations()
